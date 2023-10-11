@@ -1,26 +1,25 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { signIn, signOut, getProviders } from "next-auth/react";
+import { signIn, signOut, useSession, getProviders } from "next-auth/react";
 
 const Nav = () => {
-  const isUserLogggedIn = true;
   const [provider, setProvider] = useState(null);
   const [toggleDropdown, setToggleDropdown] = useState(false);
-  const session = true;
+  const { data: session } = useSession();
   useEffect(() => {
-    const setProvider = async () => {
+    const setUpProvider = async () => {
       const response = await getProviders();
       setProvider(response);
     };
+    setUpProvider();
   }, []);
   return (
     <nav className="flex-between w-full mb-16 pt-3">
       <Link href={"/"} className="flex gap-2 flex-center">
         <Image
-          src="/assets/images/logo.svg"
+          src={"/assets/images/logo.svg"}
           width={30}
           height={30}
           alt="Promptopia logo"
@@ -30,7 +29,7 @@ const Nav = () => {
       </Link>
       {/* For Desktop Navigation */}
       <div className="sm:flex hidden">
-        {isUserLogggedIn ? (
+        {session?.user ? (
           <div className="flex gap-3 md:gap-5">
             <Link href="/create-prompt" className="black_btn">
               Create Post
@@ -40,7 +39,7 @@ const Nav = () => {
             </button>
             <Link href="/profile">
               <Image
-                src="/assets/images/logo.svg"
+                src={session?.user.image}
                 width={37}
                 height={37}
                 className="rounded-full"
@@ -68,40 +67,44 @@ const Nav = () => {
       </div>
       {/* For Mobile Navigation */}
       <div className="sm:hidden flex relative">
-        <div className="flex">
-          <Image
-            className="rounded-full"
-            width={37}
-            height={37}
-            src="/assets/images/logo.svg"
-            alt="Profile"
-            onClick={() => setToggleDropdown((prev) => !prev)}
-          />
-          {toggleDropdown && (
-            <div className="dropdown">
-              <Link className="dropdown_link" href="/profile">
-                Profile
-              </Link>
-              <Link
-                href="create-prompt"
-                className="dropdown_link"
-                onClick={() => setToggleDropdown(false)}
-              >
-                Create Prompt
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setToggleDropdown(false);
-                  signOut();
-                }}
-                className="mt-5 w-full black_btn"
-              >
-                Sign Out
-              </button>
-            </div>
-          )}
-        </div>
+        {session?.user ? (
+          <div className="flex">
+            <Image
+              className="rounded-full"
+              width={37}
+              height={37}
+              src={session?.user.image}
+              alt="Profile"
+              onClick={() => setToggleDropdown((prev) => !prev)}
+            />
+            {toggleDropdown && (
+              <div className="dropdown">
+                <Link className="dropdown_link" href="/profile">
+                  Profile
+                </Link>
+                <Link
+                  href="create-prompt"
+                  className="dropdown_link"
+                  onClick={() => setToggleDropdown(false)}
+                >
+                  Create Prompt
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setToggleDropdown(false);
+                    signOut();
+                  }}
+                  className="mt-5 w-full black_btn"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <></>
+        )}
       </div>
     </nav>
   );
