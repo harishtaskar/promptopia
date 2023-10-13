@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PromptCard from "./PromptCard";
+import { useSession } from "next-auth/react";
 
 const PromptCardList = ({ data, handleTagClick }) => {
   return (
@@ -21,8 +22,50 @@ const PromptCardList = ({ data, handleTagClick }) => {
 const Feed = () => {
   const [searchText, setSearchText] = useState("");
   const [posts, setPosts] = useState([]);
+  const { data: session } = useSession();
+  const [searchTimeout, setSearchTimeout] = useState(null);
+  const [searchedResults, setSearchedResults] = useState([]);
+
+  console.log(session);
+
+  // const handleSearchChange = (e) => {
+  //   console.log(searchText);
+  //   setSearchText(e.target.value);
+  //   clearTimeout(timeout);
+  //   timeout = setTimeout(() => {
+  //     setPosts(
+  //       posts.filter((post) => {
+  //         return (
+  //           post.prompt.toLowerCase().includes(searchText.toLowerCase()) ||
+  //           post.tag.toLowerCase().includes(searchText.toLowerCase()) ||
+  //           session?.user.name.toLowerCase().includes(searchText.toLowerCase())
+  //         );
+  //       })
+  //     );
+  //   }, 1000);
+  // };
+
+  const filterPrompts = (searchtext) => {
+    const regex = new RegExp(searchtext, "i"); // 'i' flag for case-insensitive search
+    return posts.filter(
+      (item) =>
+        regex.test(item.creator.username) ||
+        regex.test(item.tag) ||
+        regex.test(item.prompt)
+    );
+  };
+
   const handleSearchChange = (e) => {
+    clearTimeout(searchTimeout);
     setSearchText(e.target.value);
+
+    // debounce method
+    setSearchTimeout(
+      setTimeout(() => {
+        const searchResult = filterPrompts(e.target.value);
+        setSearchedResults(searchResult);
+      }, 500)
+    );
   };
 
   useEffect(() => {
@@ -32,7 +75,13 @@ const Feed = () => {
       setPosts(data);
     };
     fetchPosts();
-  }, []);
+  }, [searchText]);
+
+  const handleTagClick = (tag) => {
+    setSearchText(tag);
+    const searchResult = filterPrompts(tag);
+    setSearchedResults(searchResult);
+  };
 
   return (
     <section className="feed">
@@ -46,7 +95,14 @@ const Feed = () => {
           className="search_input"
         />
       </form>
-      <PromptCardList data={posts} handleTagClick={() => {}} />
+      {searchText ? (
+        <PromptCardList
+          data={searchedResults}
+          handleTagClick={handleTagClick}
+        />
+      ) : (
+        <PromptCardList data={posts} handleTagClick={handleTagClick} />
+      )}
     </section>
   );
 };

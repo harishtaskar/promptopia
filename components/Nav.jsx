@@ -22,7 +22,7 @@ const Nav = () => {
           src={"/assets/images/logo.svg"}
           width={30}
           height={30}
-          alt="Promptopia logo"
+          alt="Promptopialogo"
           className="object-contain"
         />
         <p className="logo_text">Promptopia</p>
